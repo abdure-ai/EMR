@@ -14,7 +14,6 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
@@ -31,3 +30,9 @@ Thumbs.db
 
 # Claude Code local tool state (machine-specific, not project config)
 /.claude
+
+# public/build (Vite output) is intentionally tracked, not ignored: the
+# cPanel host has no Node.js, so the compiled assets are committed here and
+# pulled as-is rather than built on the server. Run `npm run build` and
+# commit the result before every push that touches resources/css or
+# resources/js - the server never rebuilds it itself.
