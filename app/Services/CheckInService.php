@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\NotifyPractitionersOfNewPatient;
 use App\Models\Appointment;
 use App\Models\ClinicSetting;
 use App\Models\Invoice;
@@ -23,7 +24,12 @@ use Illuminate\Support\Facades\DB;
  *    revisit. Paying THIS is what creates the queue entry.
  *
  * Keeping both here (rather than duplicated across Livewire components)
- * means the billing rule only lives in one place.
+ * means the billing rule only lives in one place. It's also why the
+ * "notify practitioners of a new patient" trigger lives here too, rather
+ * than in PatientCreate: the practitioner should hear about the patient
+ * once they're actually queued and ready to be seen, not the moment
+ * reception submits the registration form - which may still be sitting
+ * with the cashier, unpaid, for an arbitrary amount of time.
  */
 class CheckInService
 {
@@ -53,6 +59,8 @@ class CheckInService
                 'practitioner_id' => $practitioner->id,
                 'created_by' => $actor->id,
             ]);
+
+            $this->notifyIfFirstEverQueueEntry($queueEntry);
 
             return ['queueEntry' => $queueEntry, 'invoice' => null];
         }
@@ -129,6 +137,8 @@ class CheckInService
 
             $appointment?->update(['status' => 'checked_in']);
 
+            $this->notifyIfFirstEverQueueEntry($queueEntry);
+
             return ['queueEntry' => $queueEntry, 'invoice' => null];
         }
 
@@ -189,7 +199,25 @@ class CheckInService
 
             $invoice->appointment?->update(['status' => 'checked_in']);
 
+            $this->notifyIfFirstEverQueueEntry($queueEntry);
+
             return $queueEntry;
         });
+    }
+
+    /**
+     * "New patient" means this is the very first queue entry this patient
+     * has ever had - whether that happened instantly (nothing owed) or only
+     * now, after the cashier approved a pending invoice. Checking the count
+     * rather than special-casing the caller means every path that can
+     * produce a patient's first-ever queue entry is covered automatically.
+     */
+    protected function notifyIfFirstEverQueueEntry(QueueEntry $queueEntry): void
+    {
+        $isFirstEver = QueueEntry::where('patient_id', $queueEntry->patient_id)->count() === 1;
+
+        if ($isFirstEver) {
+            NotifyPractitionersOfNewPatient::dispatch($queueEntry->patient_id);
+        }
     }
 }

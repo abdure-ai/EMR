@@ -33,25 +33,29 @@
                         <tr class="border-b border-gray-100 last:border-0 dark:border-gray-800">
                             <td class="px-5 py-4 text-theme-sm text-gray-800 dark:text-white/90 sm:px-6">{{ $user->name }}</td>
                             <td class="px-5 py-4 text-theme-sm text-gray-500 dark:text-gray-400 sm:px-6">{{ $user->email }}</td>
-                            <td class="px-5 py-4 sm:px-6">
-                                <select wire:change="assignRole({{ $user->id }}, $event.target.value)"
-                                        class="dark:bg-dark-900 h-9 rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90">
-                                    <option value="">— none —</option>
-                                    @foreach ($roles as $role)
-                                        <option value="{{ $role }}" @selected($user->roles->pluck('name')->contains($role))>{{ $role }}</option>
-                                    @endforeach
-                                </select>
+                            <td class="px-5 py-4 text-theme-sm text-gray-800 dark:text-white/90 sm:px-6">
+                                {{ $user->roles->pluck('name')->join(', ') ?: '— none —' }}
                             </td>
                             <td class="px-5 py-4 sm:px-6">
                                 <x-ui.badge variant="solid" :color="$user->is_active ? 'success' : 'error'">
                                     {{ $user->is_active ? 'Active' : 'Inactive' }}
                                 </x-ui.badge>
                             </td>
-                            <td class="px-5 py-4 text-right sm:px-6">
-                                <button wire:click="toggleActive({{ $user->id }})" wire:confirm="Are you sure?"
-                                        class="text-theme-sm text-gray-600 hover:underline dark:text-gray-300">
-                                    {{ $user->is_active ? 'Deactivate' : 'Activate' }}
-                                </button>
+                            <td class="px-5 py-4 sm:px-6">
+                                <div class="flex items-center justify-end gap-3">
+                                    @can('update', $user)
+                                        <a href="{{ route('admin.users.edit', $user) }}" title="{{ __('Edit') }}"
+                                           class="text-gray-400 hover:text-brand-500">
+                                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M13.89 2.86a1.75 1.75 0 0 1 2.475 2.475L15.06 6.64l-2.475-2.475 1.305-1.305Zm-2.366 2.366L3.146 13.604a1 1 0 0 0-.263.464l-.7 3.03a.5.5 0 0 0 .6.6l3.03-.7a1 1 0 0 0 .464-.263l8.378-8.378-2.475-2.475Z" fill="currentColor"/>
+                                            </svg>
+                                        </a>
+                                    @endcan
+                                    <button wire:click="toggleActive({{ $user->id }})" wire:confirm="Are you sure?"
+                                            class="text-theme-sm text-gray-600 hover:underline dark:text-gray-300">
+                                        {{ $user->is_active ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @endforeach

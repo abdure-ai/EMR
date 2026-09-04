@@ -4,8 +4,6 @@ import ApexCharts from 'apexcharts';
 // flatpickr
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
-// FullCalendar
-import { Calendar } from '@fullcalendar/core';
 
 // Livewire v3 bundles and starts its own Alpine instance (via @livewireScripts).
 // Do NOT import/start a separate 'alpinejs' package here - two instances fighting
@@ -14,7 +12,6 @@ import { Calendar } from '@fullcalendar/core';
 
 window.ApexCharts = ApexCharts;
 window.flatpickr = flatpickr;
-window.FullCalendar = Calendar;
 
 // Theme/sidebar stores live here (not in a per-layout inline <script>) because
 // Livewire's redirect(navigate: true) does a client-side SPA transition that
@@ -78,6 +75,28 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
+    // 3D cursor-tilt for cards on the public marketing site (Services,
+    // featured treatments, highlights). Skipped entirely under
+    // prefers-reduced-motion rather than just made subtler - a card
+    // that visibly moves under the cursor is exactly the kind of motion
+    // that setting exists to suppress.
+    Alpine.data('tiltCard', () => ({
+        reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        tiltStyle: '',
+        handleMove(event) {
+            if (this.reducedMotion) return;
+            const rect = this.$el.getBoundingClientRect();
+            const px = (event.clientX - rect.left) / rect.width - 0.5;
+            const py = (event.clientY - rect.top) / rect.height - 0.5;
+            const rotateX = (-py * 7).toFixed(2);
+            const rotateY = (px * 9).toFixed(2);
+            this.tiltStyle = `transform: perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px);`;
+        },
+        reset() {
+            this.tiltStyle = 'transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0);';
+        },
+    }));
+
     Alpine.store('sidebar', {
         isExpanded: window.innerWidth >= 1280,
         isMobileOpen: false,
@@ -120,35 +139,26 @@ document.addEventListener('livewire:navigated', () => {
     window.Alpine.store('theme').apply();
 });
 
-// Initialize components on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Map imports
-    if (document.querySelector('#mapOne')) {
-        import('./components/map').then(module => module.initMap());
-    }
+// Public-site hero 3D scene (see components/hero-scene.js). Torn down on
+// livewire:navigating (fires right before the SPA swap) and rebuilt on
+// livewire:navigated - the #heroScene canvas host only exists on the Home
+// page, so this is a no-op everywhere else. Also covers the very first
+// page load: Livewire fires 'navigated' once after initial boot too.
+let heroScene = null;
 
-    // Chart imports
-    if (document.querySelector('#chartOne')) {
-        import('./components/chart/chart-1').then(module => module.initChartOne());
-    }
-    if (document.querySelector('#chartTwo')) {
-        import('./components/chart/chart-2').then(module => module.initChartTwo());
-    }
-    if (document.querySelector('#chartThree')) {
-        import('./components/chart/chart-3').then(module => module.initChartThree());
-    }
-    if (document.querySelector('#chartSix')) {
-        import('./components/chart/chart-6').then(module => module.initChartSix());
-    }
-    if (document.querySelector('#chartEight')) {
-        import('./components/chart/chart-8').then(module => module.initChartEight());
-    }
-    if (document.querySelector('#chartThirteen')) {
-        import('./components/chart/chart-13').then(module => module.initChartThirteen());
-    }
-
-    // Calendar init
-    if (document.querySelector('#calendar')) {
-        import('./components/calendar-init').then(module => module.calendarInit());
+document.addEventListener('livewire:navigating', () => {
+    if (heroScene) {
+        heroScene.destroy();
+        heroScene = null;
     }
 });
+
+document.addEventListener('livewire:navigated', () => {
+    const host = document.querySelector('#heroScene');
+    if (!host) return;
+
+    import('./components/hero-scene').then(({ initHeroScene }) => {
+        heroScene = initHeroScene(host);
+    });
+});
+

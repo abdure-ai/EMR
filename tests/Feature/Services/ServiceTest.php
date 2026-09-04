@@ -3,6 +3,7 @@
 namespace Tests\Feature\Services;
 
 use App\Livewire\Services\ServiceCreate;
+use App\Livewire\Services\ServiceEdit;
 use App\Models\Department;
 use App\Models\Service;
 use App\Models\User;
@@ -69,5 +70,27 @@ class ServiceTest extends TestCase
         $this->actingAs($reception)
             ->get(route('services.create'))
             ->assertForbidden();
+    }
+
+    public function test_manager_can_mark_a_service_visible_on_the_public_website(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Clinic Manager');
+        $department = Department::create(['name' => 'General Medicine']);
+        $service = Service::create([
+            'department_id' => $department->id, 'name' => 'Herbal Therapy Session', 'duration_minutes' => 60,
+        ]);
+
+        $this->actingAs($manager);
+
+        Livewire::test(ServiceEdit::class, ['service' => $service])
+            ->set('description', 'A guided herbal treatment session.')
+            ->set('show_on_website', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $service->refresh();
+        $this->assertTrue($service->show_on_website);
+        $this->assertSame('A guided herbal treatment session.', $service->description);
     }
 }

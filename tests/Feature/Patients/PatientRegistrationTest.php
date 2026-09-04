@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -40,6 +41,15 @@ class PatientRegistrationTest extends TestCase
 
     public function test_reception_can_register_a_patient_and_assign_them_for_todays_visit(): void
     {
+        // This service has a price, so registration leaves a pending invoice
+        // with the cashier rather than queuing the patient outright - and
+        // the new-patient notification only fires once a patient is
+        // actually queued (see CheckInService), which doesn't happen here.
+        // This assertion guards that invariant against a future change that
+        // accidentally notifies practitioners before payment is confirmed.
+        // (See CheckInBillingTest for the cases that do dispatch it.)
+        Http::fake();
+
         $reception = User::factory()->create();
         $reception->assignRole('Reception');
         $service = $this->makeDepartmentAndService();
@@ -79,6 +89,8 @@ class PatientRegistrationTest extends TestCase
             'patient_id' => $patient->id, 'type' => 'visit',
             'practitioner_id' => $practitioner->id, 'service_id' => $service->id,
         ]);
+
+        Http::assertNothingSent();
     }
 
     public function test_registration_fails_validation_when_required_fields_are_missing(): void

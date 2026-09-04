@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'telegram_chat_id', 'telegram_link_code'])]
 #[Hidden(['password', 'remember_token', 'mfa_secret'])]
 class User extends Authenticatable
 {
@@ -31,5 +31,10 @@ class User extends Authenticatable
             'mfa_enabled' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function hasTelegramLinked(): bool
+    {
+        return filled($this->telegram_chat_id);
     }
 }

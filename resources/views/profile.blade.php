@@ -16,6 +16,12 @@
             </div>
         </x-common.component-card>
 
+        <x-common.component-card title="Telegram Notifications">
+            <div class="max-w-xl">
+                <livewire:profile.telegram-link />
+            </div>
+        </x-common.component-card>
+
         <x-common.component-card title="Delete Account">
             <div class="max-w-xl">
                 <livewire:profile.delete-user-form />

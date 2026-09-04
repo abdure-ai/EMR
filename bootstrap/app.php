@@ -17,6 +17,19 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // Applies to every web request - public site and the staff dashboard
+        // both read the same session-stored locale, guest or authenticated.
+        $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
+        // Telegram's servers POST here directly - no session, no CSRF token
+        // to send. The endpoint authenticates via a shared-secret header
+        // instead (see TelegramWebhookController).
+        $middleware->validateCsrfTokens(except: [
+            'telegram/webhook',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

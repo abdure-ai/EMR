@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
     'queue_entry_id', 'patient_id', 'practitioner_id',
     'patient_note', 'results',
     'status', 'finalized_at',
-    'follow_up_date', 'follow_up_reason', 'follow_up_dismissed_at',
+    'follow_up_date', 'follow_up_reason', 'follow_up_dismissed_at', 'follow_up_requires_payment',
 ])]
 class Encounter extends Model
 {
@@ -22,6 +22,7 @@ class Encounter extends Model
             'finalized_at' => 'datetime',
             'follow_up_date' => 'date',
             'follow_up_dismissed_at' => 'datetime',
+            'follow_up_requires_payment' => 'boolean',
         ];
     }
 

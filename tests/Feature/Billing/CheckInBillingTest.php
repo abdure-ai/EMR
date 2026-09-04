@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Billing;
 
+use App\Jobs\NotifyPractitionersOfNewPatient;
 use App\Livewire\Appointments\AppointmentIndex;
 use App\Livewire\Billing\InvoiceIndex;
 use App\Livewire\Billing\InvoiceShow;
@@ -16,6 +17,7 @@ use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -145,6 +147,8 @@ class CheckInBillingTest extends TestCase
 
     public function test_registering_a_patient_queues_directly_when_nothing_is_owed(): void
     {
+        Queue::fake();
+
         ClinicSetting::current()->update(['new_patient_card_fee' => 0]);
 
         $reception = $this->makeReception();
@@ -168,6 +172,92 @@ class CheckInBillingTest extends TestCase
 
         $this->assertSame(0, Invoice::count());
         $this->assertSame(1, QueueEntry::count());
+
+        // Nothing was owed, so there's no cashier step to wait for - the
+        // practitioner is notified the moment the patient is queued.
+        $patient = Patient::first();
+        Queue::assertPushed(NotifyPractitionersOfNewPatient::class, fn ($job) => $job->patientId === $patient->id);
+    }
+
+    public function test_registering_a_patient_who_owes_money_does_not_notify_until_the_cashier_approves_payment(): void
+    {
+        Queue::fake();
+
+        $reception = $this->makeReception();
+        $service = $this->makeService();
+        $practitioner = $this->makePractitioner();
+
+        $this->actingAs($reception);
+
+        Livewire::test(PatientCreate::class)
+            ->set('first_name', 'Kebede')
+            ->set('last_name', 'Desalgn')
+            ->set('sex', 'male')
+            ->set('age', '35')
+            ->set('phone', '+251911000096')
+            ->set('department_id', (string) $service->department_id)
+            ->set('service_id', (string) $service->id)
+            ->set('practitioner_id', (string) $practitioner->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        // Payment is still pending with the cashier - nobody's been notified yet.
+        Queue::assertNotPushed(NotifyPractitionersOfNewPatient::class);
+
+        $cashier = User::factory()->create();
+        $cashier->assignRole('Cashier');
+        $invoice = Invoice::first();
+
+        $this->actingAs($cashier);
+
+        Livewire::test(InvoiceShow::class, ['invoice' => $invoice])
+            ->set('paymentMethod', 'cash')
+            ->call('confirmPayment')
+            ->assertHasNoErrors();
+
+        // Only now, once the cashier has actually approved the payment and
+        // the patient has joined the queue, does the practitioner hear about it.
+        $patient = Patient::first();
+        Queue::assertPushed(NotifyPractitionersOfNewPatient::class, fn ($job) => $job->patientId === $patient->id);
+    }
+
+    public function test_an_existing_patients_revisit_payment_does_not_resend_the_new_patient_notification(): void
+    {
+        Queue::fake();
+
+        $reception = $this->makeReception();
+        $patient = $this->makePatient();
+        $service = $this->makeService();
+        $practitioner = $this->makePractitioner();
+
+        // Patient already has a completed visit in the past - they're not new.
+        QueueEntry::create([
+            'patient_id' => $patient->id,
+            'practitioner_id' => $practitioner->id,
+            'status' => 'completed',
+            'check_in_time' => now()->subDays(40),
+            'completed_at' => now()->subDays(40),
+        ]);
+
+        $appointment = Appointment::create([
+            'patient_id' => $patient->id, 'service_id' => $service->id,
+            'practitioner_id' => $practitioner->id, 'scheduled_at' => today()->setTime(9, 0),
+        ]);
+
+        $this->actingAs($reception);
+        Livewire::test(AppointmentIndex::class)->call('checkIn', $appointment->id);
+
+        $cashier = User::factory()->create();
+        $cashier->assignRole('Cashier');
+        $invoice = Invoice::where('patient_id', $patient->id)->where('status', 'pending')->first();
+
+        $this->actingAs($cashier);
+        Livewire::test(InvoiceShow::class, ['invoice' => $invoice])
+            ->set('paymentMethod', 'cash')
+            ->call('confirmPayment')
+            ->assertHasNoErrors();
+
+        Queue::assertNotPushed(NotifyPractitionersOfNewPatient::class);
     }
 
     public function test_appointment_check_in_charges_the_service_price_not_the_card_fee(): void

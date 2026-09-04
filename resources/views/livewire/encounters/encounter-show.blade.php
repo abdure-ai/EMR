@@ -21,6 +21,10 @@
             'label' => 'Results',
             'icon' => '<path fill-rule="evenodd" d="M6.75 2A1.75 1.75 0 0 0 5 3.75v.25H4.5A1.5 1.5 0 0 0 3 5.5v10A1.5 1.5 0 0 0 4.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 13.5 4H13v-.25A1.75 1.75 0 0 0 11.25 2h-4.5ZM6.5 3.75a.25.25 0 0 1 .25-.25h4.5a.25.25 0 0 1 .25.25v.5h-5v-.5Zm6.03 5.03-4 4a.75.75 0 0 1-1.06 0l-1.5-1.5a.75.75 0 1 1 1.06-1.06l.97.97 3.47-3.47a.75.75 0 1 1 1.06 1.06Z" clip-rule="evenodd" />',
         ],
+        'appointment' => [
+            'label' => 'Appointment',
+            'icon' => '<path fill-rule="evenodd" d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2ZM3.5 9.5v5.75c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25V9.5h-13Z" clip-rule="evenodd" />',
+        ],
     ];
 @endphp
 
@@ -184,12 +188,12 @@
                             <textarea id="results" wire:model="results" rows="8" class="{{ $textareaClass }}" placeholder="Investigation results, findings..."></textarea>
                             <x-input-error :messages="$errors->get('results')" class="mt-2" />
                         </div>
-
-                        <div class="mt-6 border-t border-gray-100 pt-5 dark:border-gray-800">
-                            <label class="{{ $labelClass }}">Follow-up (optional)</label>
+                        <div x-show="tab === 'appointment'" x-cloak>
+                            <label class="{{ $labelClass }}">Next visit / follow-up (optional)</label>
+                            <p class="mb-3 text-xs text-gray-400">The assigned practitioner decides whether the patient needs to come back, and whether they'll need to pay when they do.</p>
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
-                                    <input type="date" wire:model="follow_up_date" min="{{ now()->toDateString() }}" class="{{ $inputClass }}">
+                                    <x-ui.date-picker model="follow_up_date" min="{{ now()->toDateString() }}" />
                                     <x-input-error :messages="$errors->get('follow_up_date')" class="mt-2" />
                                 </div>
                                 <div>
@@ -198,6 +202,12 @@
                                 </div>
                             </div>
                             <p class="mt-1 text-xs text-gray-400">Ask the patient to come back on this date - it'll show up on reception's follow-up list once due.</p>
+
+                            <label class="mt-5 flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <input type="checkbox" wire:model="follow_up_requires_payment" class="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500">
+                                {{ __('Patient will pay when they come in on the appointed date') }}
+                            </label>
+                            <x-input-error :messages="$errors->get('follow_up_requires_payment')" class="mt-2" />
                         </div>
 
                         <div class="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5 dark:border-gray-800">
@@ -264,10 +274,9 @@
                         <p class="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">Results</p>
                         <p class="whitespace-pre-line text-sm text-gray-800 dark:text-white/90">{{ $encounter->results ?: '—' }}</p>
                     </div>
-
-                    @if ($encounter->follow_up_date)
-                        <div class="mt-6 border-t border-gray-100 pt-5 dark:border-gray-800">
-                            <p class="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">Follow-up</p>
+                    <div x-show="tab === 'appointment'" x-cloak>
+                        <p class="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">Next visit / follow-up</p>
+                        @if ($encounter->follow_up_date)
                             <p class="text-sm text-gray-800 dark:text-white/90">
                                 {{ $encounter->follow_up_date->format('Y-m-d') }}
                                 @if ($encounter->follow_up_reason)
@@ -277,55 +286,16 @@
                                     <x-ui.badge size="sm" variant="solid" color="light">Dismissed</x-ui.badge>
                                 @endif
                             </p>
-                        </div>
-                    @endif
-                @endif
-            </div>
-        </div>
-
-        <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-            <div class="flex items-center justify-between px-6 py-5">
-                <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Medical record</h3>
-                @if ($canUpdateMedical && ! $editingMedical)
-                    <button wire:click="startEditingMedical" class="text-sm text-brand-500 hover:text-brand-600">Edit</button>
-                @endif
-            </div>
-            <div class="border-t border-gray-100 p-4 dark:border-gray-800 sm:p-6">
-                @if ($editingMedical)
-                    <form wire:submit="saveMedical" class="space-y-5">
-                        <div>
-                            <label for="main_complaint" class="{{ $labelClass }}">Main complaint</label>
-                            <textarea id="main_complaint" wire:model="main_complaint" rows="2" class="{{ $inputClass }}"></textarea>
-                        </div>
-                        <div>
-                            <label for="medical_history" class="{{ $labelClass }}">Medical history</label>
-                            <textarea id="medical_history" wire:model="medical_history" rows="3" class="{{ $inputClass }}"></textarea>
-                        </div>
-                        <div>
-                            <label for="allergies" class="{{ $labelClass }}">Allergies</label>
-                            <textarea id="allergies" wire:model="allergies" rows="2" class="{{ $inputClass }}"></textarea>
-                        </div>
-                        <div>
-                            <label for="current_medications" class="{{ $labelClass }}">Current medications</label>
-                            <textarea id="current_medications" wire:model="current_medications" rows="2" class="{{ $inputClass }}"></textarea>
-                        </div>
-                        <div>
-                            <label for="previous_treatments" class="{{ $labelClass }}">Previous treatments</label>
-                            <textarea id="previous_treatments" wire:model="previous_treatments" rows="3" class="{{ $inputClass }}"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-3">
-                            <button type="button" wire:click="$set('editingMedical', false)" class="text-sm text-gray-600 dark:text-gray-300">Cancel</button>
-                            <x-ui.button type="submit">{{ __('Save') }}</x-ui.button>
-                        </div>
-                    </form>
-                @else
-                    <dl class="space-y-3 text-sm">
-                        <div><dt class="text-gray-500 dark:text-gray-400">Main complaint</dt><dd class="text-gray-800 dark:text-white/90">{{ $main_complaint ?: '—' }}</dd></div>
-                        <div><dt class="text-gray-500 dark:text-gray-400">Medical history</dt><dd class="text-gray-800 dark:text-white/90">{{ $medical_history ?: '—' }}</dd></div>
-                        <div><dt class="text-gray-500 dark:text-gray-400">Allergies</dt><dd class="text-gray-800 dark:text-white/90">{{ $allergies ?: '—' }}</dd></div>
-                        <div><dt class="text-gray-500 dark:text-gray-400">Current medications</dt><dd class="text-gray-800 dark:text-white/90">{{ $current_medications ?: '—' }}</dd></div>
-                        <div><dt class="text-gray-500 dark:text-gray-400">Previous treatments</dt><dd class="text-gray-800 dark:text-white/90">{{ $previous_treatments ?: '—' }}</dd></div>
-                    </dl>
+                            <p class="mt-2 text-sm text-gray-800 dark:text-white/90">
+                                {{ __('Payment on arrival') }}:
+                                <x-ui.badge size="sm" variant="solid" :color="$encounter->follow_up_requires_payment ? 'warning' : 'success'">
+                                    {{ $encounter->follow_up_requires_payment ? __('Required') : __('Not required') }}
+                                </x-ui.badge>
+                            </p>
+                        @else
+                            <p class="text-sm text-gray-800 dark:text-white/90">—</p>
+                        @endif
+                    </div>
                 @endif
             </div>
         </div>

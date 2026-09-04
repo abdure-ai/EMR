@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Encounter;
 use App\Models\Investigation;
 use App\Models\Medication;
+use App\Models\NewsPost;
 use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\QueueEntry;
@@ -31,6 +32,47 @@ class DemoDataSeeder extends Seeder
         $this->seedInventory();
         $this->seedAppointments($practitioners);
         $this->seedPrescriptions($practitioners);
+        $this->seedNewsPosts();
+    }
+
+    /**
+     * A couple of sample posts so the public News page and admin News list
+     * aren't empty in local/dev - not something a real production clinic
+     * would want fabricated for them, so this stays out of SiteContentSeeder.
+     */
+    protected function seedNewsPosts(): void
+    {
+        if (NewsPost::exists()) {
+            return;
+        }
+
+        $manager = User::where('email', 'manager@nesiha.test')->first();
+
+        $posts = [
+            [
+                'title' => 'Nesiha Herbal Clinic Now Open for Walk-In Consultations',
+                'excerpt' => 'Same-day consultations are now available for new and returning patients.',
+                'body' => "We're pleased to announce that Nesiha Herbal Clinic now welcomes walk-in patients for same-day consultations, alongside scheduled appointments.\n\nOur practitioners remain committed to providing personalized, Islamic-compliant herbal care to every patient who visits us - whether you've planned ahead or need to be seen the same day.",
+                'days_ago' => 18,
+            ],
+            [
+                'title' => 'Understanding the Benefits of Traditional Cupping Therapy',
+                'excerpt' => 'A look at how Hijama cupping therapy supports the body\'s natural healing process.',
+                'body' => "Cupping therapy, known as Hijama, has been practiced for centuries as part of traditional Islamic medicine.\n\nAt Nesiha, our trained practitioners perform cupping therapy in a clean, comfortable setting - helping patients experience its traditional benefits for circulation and recovery.\n\nIf you're curious whether cupping therapy is right for you, book a consultation and our team will walk you through what to expect.",
+                'days_ago' => 7,
+            ],
+        ];
+
+        foreach ($posts as $data) {
+            NewsPost::create([
+                'title' => $data['title'],
+                'excerpt' => $data['excerpt'],
+                'body' => $data['body'],
+                'is_published' => true,
+                'published_at' => now()->subDays($data['days_ago']),
+                'created_by' => $manager?->id,
+            ]);
+        }
     }
 
     protected function makePractitioners(): \Illuminate\Support\Collection

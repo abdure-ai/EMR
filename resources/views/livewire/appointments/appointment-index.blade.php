@@ -32,7 +32,7 @@
 
                 <div>
                     <label class="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Date</label>
-                    <input type="date" wire:model.live="date" class="{{ $selectClass }}">
+                    <x-ui.date-picker model="date" live class="{{ $selectClass }}" />
                 </div>
 
                 @if ($practitioners->isNotEmpty() && ! auth()->user()->hasRole('Practitioner'))

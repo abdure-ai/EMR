@@ -32,10 +32,10 @@ new #[Layout('layouts.auth', ['title' => 'Sign In'])] class extends Component
                 <div>
                     <div class="mb-5 sm:mb-8">
                         <h1 class="text-title-sm sm:text-title-md mb-2 font-semibold text-gray-800 dark:text-white/90">
-                            Sign In
+                            {{ __('Sign In') }}
                         </h1>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                            Enter your email and password to sign in to NESIHA EMR.
+                            {{ __("Enter your email and password to sign in to NESIHA EMR.") }}
                         </p>
                     </div>
 
@@ -46,7 +46,7 @@ new #[Layout('layouts.auth', ['title' => 'Sign In'])] class extends Component
                             <!-- Email -->
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                                    Email<span class="text-error-500">*</span>
+                                    {{ __('Email') }}<span class="text-error-500">*</span>
                                 </label>
                                 <input wire:model="form.email" id="email" type="email" name="email" required autofocus autocomplete="username"
                                     class="dark:bg-dark-900 shadow-theme-xs focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
@@ -55,7 +55,7 @@ new #[Layout('layouts.auth', ['title' => 'Sign In'])] class extends Component
                             <!-- Password -->
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                                    Password<span class="text-error-500">*</span>
+                                    {{ __('Password') }}<span class="text-error-500">*</span>
                                 </label>
                                 <div x-data="{ showPassword: false }" class="relative">
                                     <input wire:model="form.password" id="password" name="password" required autocomplete="current-password"
@@ -80,12 +80,12 @@ new #[Layout('layouts.auth', ['title' => 'Sign In'])] class extends Component
                                 <label class="flex cursor-pointer items-center text-sm font-normal text-gray-700 select-none dark:text-gray-400">
                                     <input wire:model="form.remember" type="checkbox" name="remember"
                                         class="mr-3 h-5 w-5 rounded-md border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700" />
-                                    Keep me logged in
+                                    {{ __('Keep me logged in') }}
                                 </label>
                                 @if (Route::has('password.request'))
                                     <a href="{{ route('password.request') }}" wire:navigate
                                        class="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-                                        Forgot password?
+                                        {{ __('Forgot password?') }}
                                     </a>
                                 @endif
                             </div>
@@ -93,7 +93,7 @@ new #[Layout('layouts.auth', ['title' => 'Sign In'])] class extends Component
                             <div>
                                 <button type="submit"
                                     class="bg-brand-500 shadow-theme-xs hover:bg-brand-600 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-white transition">
-                                    Sign In
+                                    {{ __('Sign In') }}
                                 </button>
                             </div>
                         </div>
@@ -109,7 +109,7 @@ new #[Layout('layouts.auth', ['title' => 'Sign In'])] class extends Component
                     <span class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl font-bold text-white">N</span>
                     <span class="mb-2 text-xl font-semibold text-white">NESIHA EMR</span>
                     <p class="text-center text-gray-400 dark:text-white/60">
-                        Digital clinic platform for NESIHA's Islamic herbal-treatment healthcare center.
+                        {{ __("Digital clinic platform for NESIHA's Islamic herbal-treatment healthcare center.") }}
                     </p>
                 </div>
             </div>

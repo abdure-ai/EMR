@@ -5,11 +5,15 @@ namespace App\Helpers;
 class MenuHelper
 {
     /**
-     * Real NESIHA functionality, filtered per the logged-in user's permissions.
-     * Every entry maps to a route that already enforces the same permission at
-     * the controller/policy level - this list only controls what's *shown*.
+     * Real NESIHA functionality, filtered per the logged-in user's permissions
+     * and organized into categories so the sidebar reads as a menu rather than
+     * one long undifferentiated list. Every entry maps to a route that already
+     * enforces the same permission at the controller/policy level - this list
+     * only controls what's *shown*. A category is dropped entirely if none of
+     * its items are visible to the current user (e.g. a Cashier never sees an
+     * empty "Clinical" heading).
      */
-    public static function getMainNavItems()
+    public static function getMenuGroups()
     {
         $user = auth()->user();
 
@@ -17,217 +21,159 @@ class MenuHelper
             return [];
         }
 
-        $items = [
+        $groups = [
+            ['title' => __('Overview'), 'items' => self::overviewItems($user)],
+            ['title' => __('Clinical'), 'items' => self::clinicalItems($user)],
+            ['title' => __('Pharmacy & Inventory'), 'items' => self::pharmacyItems($user)],
+            ['title' => __('Front Office'), 'items' => self::frontOfficeItems($user)],
+            ['title' => __('Insights'), 'items' => self::insightsItems($user)],
+            ['title' => __('Website'), 'items' => self::websiteItems($user)],
+            ['title' => __('Administration'), 'items' => self::administrationItems($user)],
+        ];
+
+        return array_values(array_filter($groups, fn ($group) => ! empty($group['items'])));
+    }
+
+    /**
+     * Flat list of every visible nav item across all groups, ungrouped.
+     * Used by the command palette, which searches modules by name rather
+     * than by category.
+     */
+    public static function getMainNavItems(): array
+    {
+        return collect(self::getMenuGroups())
+            ->flatMap(fn ($group) => $group['items'])
+            ->values()
+            ->all();
+    }
+
+    protected static function overviewItems($user): array
+    {
+        return [
             [
                 'icon' => 'dashboard',
-                'name' => 'Dashboard',
+                'name' => __('Dashboard'),
                 'path' => '/dashboard',
             ],
         ];
+    }
+
+    protected static function clinicalItems($user): array
+    {
+        $items = [];
 
         if ($user->can('viewAny', \App\Models\Patient::class)) {
-            $items[] = [
-                'icon' => 'user-profile',
-                'name' => 'Patients',
-                'path' => '/patients',
-            ];
+            $items[] = ['icon' => 'user-profile', 'name' => __('Patients'), 'path' => '/patients'];
         }
 
         if ($user->can('viewAny', \App\Models\Appointment::class)) {
-            $items[] = [
-                'icon' => 'calendar',
-                'name' => 'Appointments',
-                'path' => '/appointments',
-            ];
+            $items[] = ['icon' => 'calendar', 'name' => __('Appointments'), 'path' => '/appointments'];
         }
 
         if ($user->can('followups.view')) {
-            $items[] = [
-                'icon' => 'calendar',
-                'name' => 'Follow-ups',
-                'path' => '/follow-ups',
-            ];
-        }
-
-        if ($user->can('viewAny', \App\Models\Invoice::class)) {
-            $items[] = [
-                'icon' => 'ecommerce',
-                'name' => 'Billing',
-                'path' => '/billing',
-            ];
-        }
-
-        if ($user->can('viewAny', \App\Models\Department::class)) {
-            $items[] = [
-                'icon' => 'task',
-                'name' => 'Departments',
-                'path' => '/departments',
-            ];
-        }
-
-        if ($user->can('viewAny', \App\Models\Service::class)) {
-            $items[] = [
-                'icon' => 'pages',
-                'name' => 'Services',
-                'path' => '/services',
-            ];
+            $items[] = ['icon' => 'calendar', 'name' => __('Follow-ups'), 'path' => '/follow-ups'];
         }
 
         if ($user->can('viewAny', \App\Models\Investigation::class)) {
-            $items[] = [
-                'icon' => 'tables',
-                'name' => 'Investigations',
-                'path' => '/investigations',
-            ];
-        }
-
-        if ($user->can('viewAny', \App\Models\Medication::class)) {
-            $items[] = [
-                'icon' => 'pages',
-                'name' => 'Medications',
-                'path' => '/medications',
-            ];
+            $items[] = ['icon' => 'tables', 'name' => __('Investigations'), 'path' => '/investigations'];
         }
 
         if ($user->can('viewAny', \App\Models\Prescription::class)) {
-            $items[] = [
-                'icon' => 'task',
-                'name' => 'Prescriptions',
-                'path' => '/prescriptions',
-            ];
-        }
-
-        if ($user->can('viewAny', \App\Models\InventoryBatch::class)) {
-            $items[] = [
-                'icon' => 'tables',
-                'name' => 'Inventory',
-                'path' => '/inventory',
-            ];
-        }
-
-        if ($user->can('reports.view')) {
-            $items[] = [
-                'icon' => 'charts',
-                'name' => 'Reports',
-                'path' => '/reports',
-            ];
-        }
-
-        if ($user->can('audit.view')) {
-            $items[] = [
-                'icon' => 'authentication',
-                'name' => 'Audit Log',
-                'path' => '/audit-log',
-            ];
-        }
-
-        if ($user->can('settings.manage')) {
-            $items[] = [
-                'icon' => 'forms',
-                'name' => 'Settings',
-                'path' => '/settings',
-            ];
-        }
-
-        if ($user->can('viewAny', \App\Models\User::class)) {
-            $items[] = [
-                'icon' => 'authentication',
-                'name' => 'User Management',
-                'subItems' => [
-                    ['name' => 'Users', 'path' => '/admin/users'],
-                    ['name' => 'Roles', 'path' => '/admin/roles'],
-                    ['name' => 'Permissions', 'path' => '/admin/permissions'],
-                ],
-            ];
+            $items[] = ['icon' => 'task', 'name' => __('Prescriptions'), 'path' => '/prescriptions'];
         }
 
         return $items;
     }
 
-    /**
-     * TailAdmin's own sample/reference pages, kept for design reference.
-     * Restricted to Super Admin - they're template scaffolding, not NESIHA
-     * features, and would confuse operational staff if shown alongside them.
-     */
-    public static function getOthersItems()
+    protected static function pharmacyItems($user): array
     {
-        if (! auth()->check() || ! auth()->user()->hasRole('Super Admin')) {
+        $items = [];
+
+        if ($user->can('viewAny', \App\Models\Medication::class)) {
+            $items[] = ['icon' => 'pages', 'name' => __('Medications'), 'path' => '/medications'];
+        }
+
+        if ($user->can('viewAny', \App\Models\InventoryBatch::class)) {
+            $items[] = ['icon' => 'tables', 'name' => __('Inventory'), 'path' => '/inventory'];
+        }
+
+        return $items;
+    }
+
+    protected static function frontOfficeItems($user): array
+    {
+        $items = [];
+
+        if ($user->can('viewAny', \App\Models\Invoice::class)) {
+            $items[] = ['icon' => 'ecommerce', 'name' => __('Billing'), 'path' => '/billing'];
+        }
+
+        if ($user->can('viewAny', \App\Models\Department::class)) {
+            $items[] = ['icon' => 'task', 'name' => __('Departments'), 'path' => '/departments'];
+        }
+
+        if ($user->can('viewAny', \App\Models\Service::class)) {
+            $items[] = ['icon' => 'pages', 'name' => __('Services'), 'path' => '/admin/services'];
+        }
+
+        return $items;
+    }
+
+    protected static function insightsItems($user): array
+    {
+        $items = [];
+
+        if ($user->can('reports.view')) {
+            $items[] = ['icon' => 'charts', 'name' => __('Reports'), 'path' => '/reports'];
+        }
+
+        if ($user->can('audit.view')) {
+            $items[] = ['icon' => 'authentication', 'name' => __('Audit Log'), 'path' => '/audit-log'];
+        }
+
+        return $items;
+    }
+
+    protected static function websiteItems($user): array
+    {
+        if (! $user->can('cms.manage')) {
             return [];
         }
 
         return [
             [
-                'icon' => 'dashboard',
-                'name' => 'Dashboard',
-                'path' => '/template/dashboard',
-            ],
-            [
-                'icon' => 'calendar',
-                'name' => 'Calendar',
-                'path' => '/template/calendar',
-            ],
-            [
-                'name' => 'Forms',
-                'icon' => 'forms',
-                'subItems' => [
-                    ['name' => 'Form Elements', 'path' => '/template/form-elements', 'pro' => false],
-                ],
-            ],
-            [
-                'name' => 'Tables',
-                'icon' => 'tables',
-                'subItems' => [
-                    ['name' => 'Basic Tables', 'path' => '/template/basic-tables', 'pro' => false]
-                ],
-            ],
-            [
-                'name' => 'Pages',
                 'icon' => 'pages',
+                'name' => __('Website'),
                 'subItems' => [
-                    ['name' => 'Blank Page', 'path' => '/template/blank', 'pro' => false],
-                    ['name' => '404 Error', 'path' => '/template/error-404', 'pro' => false]
-                ],
-            ],
-            [
-                'icon' => 'charts',
-                'name' => 'Charts',
-                'subItems' => [
-                    ['name' => 'Line Chart', 'path' => '/template/line-chart', 'pro' => false],
-                    ['name' => 'Bar Chart', 'path' => '/template/bar-chart', 'pro' => false]
-                ],
-            ],
-            [
-                'icon' => 'ui-elements',
-                'name' => 'UI Elements',
-                'subItems' => [
-                    ['name' => 'Alerts', 'path' => '/template/alerts', 'pro' => false],
-                    ['name' => 'Avatar', 'path' => '/template/avatars', 'pro' => false],
-                    ['name' => 'Badge', 'path' => '/template/badge', 'pro' => false],
-                    ['name' => 'Buttons', 'path' => '/template/buttons', 'pro' => false],
-                    ['name' => 'Images', 'path' => '/template/image', 'pro' => false],
-                    ['name' => 'Videos', 'path' => '/template/videos', 'pro' => false],
+                    ['name' => __('Site Content'), 'path' => '/admin/website/content'],
+                    ['name' => __('News'), 'path' => '/admin/website/news'],
+                    ['name' => __('Messages'), 'path' => '/admin/website/messages'],
                 ],
             ],
         ];
     }
 
-    public static function getMenuGroups()
+    protected static function administrationItems($user): array
     {
-        $groups = [
-            [
-                'title' => 'NESIHA',
-                'items' => self::getMainNavItems()
-            ],
-        ];
+        $items = [];
 
-        if ($others = self::getOthersItems()) {
-            $groups[] = [
-                'title' => 'Template Reference',
-                'items' => $others,
+        if ($user->can('settings.manage')) {
+            $items[] = ['icon' => 'forms', 'name' => __('Settings'), 'path' => '/settings'];
+        }
+
+        if ($user->can('viewAny', \App\Models\User::class)) {
+            $items[] = [
+                'icon' => 'authentication',
+                'name' => __('User Management'),
+                'subItems' => [
+                    ['name' => __('Users'), 'path' => '/admin/users'],
+                    ['name' => __('Roles'), 'path' => '/admin/roles'],
+                    ['name' => __('Permissions'), 'path' => '/admin/permissions'],
+                ],
             ];
         }
 
-        return $groups;
+        return $items;
     }
 
     public static function isActive($path)

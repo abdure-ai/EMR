@@ -36,6 +36,7 @@
                             <th class="px-5 py-3 text-left sm:px-6"><p class="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Due date</p></th>
                             <th class="px-5 py-3 text-left sm:px-6"><p class="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Status</p></th>
                             <th class="px-5 py-3 text-left sm:px-6"><p class="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Reason</p></th>
+                            <th class="px-5 py-3 text-left sm:px-6"><p class="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Payment</p></th>
                             <th class="px-5 py-3 text-left sm:px-6"><p class="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Practitioner</p></th>
                             <th class="px-5 py-3 text-right sm:px-6"><p class="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Actions</p></th>
                         </tr>
@@ -59,6 +60,11 @@
                                     @endif
                                 </td>
                                 <td class="px-5 py-4 text-theme-sm text-gray-500 dark:text-gray-400 sm:px-6">{{ $encounter->follow_up_reason ?: '—' }}</td>
+                                <td class="px-5 py-4 sm:px-6">
+                                    <x-ui.badge size="sm" variant="solid" :color="$encounter->follow_up_requires_payment ? 'warning' : 'success'">
+                                        {{ $encounter->follow_up_requires_payment ? __('Required') : __('Not required') }}
+                                    </x-ui.badge>
+                                </td>
                                 <td class="px-5 py-4 text-theme-sm text-gray-500 dark:text-gray-400 sm:px-6">{{ $encounter->practitioner->name ?? '—' }}</td>
                                 <td class="px-5 py-4 text-right text-theme-sm sm:px-6">
                                     <div class="flex items-center justify-end gap-3">
@@ -76,7 +82,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-5 py-8 text-center text-theme-sm text-gray-500 dark:text-gray-400">No follow-ups due right now.</td>
+                                <td colspan="7" class="px-5 py-8 text-center text-theme-sm text-gray-500 dark:text-gray-400">No follow-ups due right now.</td>
                             </tr>
                         @endforelse
                     </tbody>

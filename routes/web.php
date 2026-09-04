@@ -2,16 +2,24 @@
 
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\TelegramWebhookController;
 use App\Livewire\Admin\PermissionCreate;
 use App\Livewire\Admin\PermissionIndex;
 use App\Livewire\Admin\RoleCreate;
 use App\Livewire\Admin\RoleEdit;
 use App\Livewire\Admin\RoleIndex;
 use App\Livewire\Admin\UserCreate;
+use App\Livewire\Admin\UserEdit;
 use App\Livewire\Admin\UserIndex;
 use App\Livewire\Appointments\AppointmentCreate;
 use App\Livewire\Appointments\AppointmentEdit;
 use App\Livewire\Appointments\AppointmentIndex;
+use App\Livewire\Admin\ContactMessageIndex;
+use App\Livewire\Admin\NewsCreate;
+use App\Livewire\Admin\NewsEdit;
+use App\Livewire\Admin\NewsIndex as AdminNewsIndex;
+use App\Livewire\Admin\SiteContentEdit;
 use App\Livewire\AuditLog\AuditLogIndex;
 use App\Livewire\Billing\InvoiceIndex;
 use App\Livewire\Billing\InvoiceShow;
@@ -46,9 +54,30 @@ use App\Livewire\Services\ServiceCreate;
 use App\Livewire\Services\ServiceEdit;
 use App\Livewire\Services\ServiceIndex;
 use App\Livewire\Settings\ClinicSettingsEdit;
+use App\Livewire\Site\About as SiteAbout;
+use App\Livewire\Site\Contact as SiteContact;
+use App\Livewire\Site\Home as SiteHome;
+use App\Livewire\Site\NewsIndex as SiteNewsIndex;
+use App\Livewire\Site\NewsShow as SiteNewsShow;
+use App\Livewire\Site\Services as SiteServices;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+// Language switch - available whether logged in or not, redirects back to
+// wherever the request came from.
+Route::get('language/{locale}', LanguageController::class)->name('language.switch');
+
+// Telegram webhook - called by Telegram's servers, not a browser. Public
+// and CSRF-exempt (see bootstrap/app.php); authenticated instead via the
+// X-Telegram-Bot-Api-Secret-Token header, checked inside the controller.
+Route::post('telegram/webhook', TelegramWebhookController::class)->name('telegram.webhook');
+
+// Public marketing site - no auth required.
+Route::get('/', SiteHome::class)->name('site.home');
+Route::get('/about', SiteAbout::class)->name('site.about');
+Route::get('/services', SiteServices::class)->name('site.services');
+Route::get('/news', SiteNewsIndex::class)->name('site.news.index');
+Route::get('/news/{post:slug}', SiteNewsShow::class)->name('site.news.show');
+Route::get('/contact', SiteContact::class)->name('site.contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
@@ -68,6 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('admin/users', UserIndex::class)->name('admin.users.index');
     Route::get('admin/users/create', UserCreate::class)->name('admin.users.create');
+    Route::get('admin/users/{user}/edit', UserEdit::class)->name('admin.users.edit');
 
     Route::get('admin/roles', RoleIndex::class)->name('admin.roles.index');
     Route::get('admin/roles/create', RoleCreate::class)->name('admin.roles.create');
@@ -92,9 +122,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('departments', DepartmentIndex::class)->name('departments.index');
     Route::get('departments/create', DepartmentCreate::class)->name('departments.create');
 
-    Route::get('services', ServiceIndex::class)->name('services.index');
-    Route::get('services/create', ServiceCreate::class)->name('services.create');
-    Route::get('services/{service}/edit', ServiceEdit::class)->name('services.edit');
+    // Prefixed admin/ - the public marketing site owns the bare /services path.
+    Route::get('admin/services', ServiceIndex::class)->name('services.index');
+    Route::get('admin/services/create', ServiceCreate::class)->name('services.create');
+    Route::get('admin/services/{service}/edit', ServiceEdit::class)->name('services.edit');
 
     Route::get('investigations', InvestigationIndex::class)->name('investigations.index');
     Route::get('investigations/create', InvestigationCreate::class)->name('investigations.create');
@@ -118,30 +149,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('audit-log', AuditLogIndex::class)->name('audit-log.index');
 
+    Route::get('admin/website/content', SiteContentEdit::class)->name('admin.site-content.edit');
+
+    Route::get('admin/website/news', AdminNewsIndex::class)->name('admin.news.index');
+    Route::get('admin/website/news/create', NewsCreate::class)->name('admin.news.create');
+    Route::get('admin/website/news/{post}/edit', NewsEdit::class)->name('admin.news.edit');
+
+    Route::get('admin/website/messages', ContactMessageIndex::class)->name('admin.contact-messages.index');
+
     Route::get('settings', ClinicSettingsEdit::class)->name('settings.index');
 
     Route::view('profile', 'profile')->name('profile');
 
     Route::post('logout', LogoutController::class)->name('logout');
-
-    // TailAdmin's own sample/reference pages, kept for design reference only.
-    // Restricted to Super Admin - see MenuHelper::getOthersItems() for why.
-    Route::prefix('template')->name('template.')->middleware('role:Super Admin')->group(function () {
-        Route::get('dashboard', fn () => view('pages.dashboard.ecommerce', ['title' => 'Ecommerce Dashboard']))->name('dashboard');
-        Route::get('calendar', fn () => view('pages.calender', ['title' => 'Calendar']))->name('calendar');
-        Route::get('form-elements', fn () => view('pages.form.form-elements', ['title' => 'Form Elements']))->name('form-elements');
-        Route::get('basic-tables', fn () => view('pages.tables.basic-tables', ['title' => 'Basic Tables']))->name('basic-tables');
-        Route::get('blank', fn () => view('pages.blank', ['title' => 'Blank']))->name('blank');
-        Route::get('error-404', fn () => view('pages.errors.error-404', ['title' => 'Error 404']))->name('error-404');
-        Route::get('line-chart', fn () => view('pages.chart.line-chart', ['title' => 'Line Chart']))->name('line-chart');
-        Route::get('bar-chart', fn () => view('pages.chart.bar-chart', ['title' => 'Bar Chart']))->name('bar-chart');
-        Route::get('alerts', fn () => view('pages.ui-elements.alerts', ['title' => 'Alerts']))->name('alerts');
-        Route::get('avatars', fn () => view('pages.ui-elements.avatars', ['title' => 'Avatars']))->name('avatars');
-        Route::get('badge', fn () => view('pages.ui-elements.badges', ['title' => 'Badges']))->name('badges');
-        Route::get('buttons', fn () => view('pages.ui-elements.buttons', ['title' => 'Buttons']))->name('buttons');
-        Route::get('image', fn () => view('pages.ui-elements.images', ['title' => 'Images']))->name('images');
-        Route::get('videos', fn () => view('pages.ui-elements.videos', ['title' => 'Videos']))->name('videos');
-    });
 });
 
 require __DIR__.'/auth.php';

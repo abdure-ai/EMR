@@ -43,12 +43,12 @@
                     </div>
                     <div>
                         <label for="expiry_date" class="{{ $labelClass }}">Expiry date (optional)</label>
-                        <input id="expiry_date" wire:model="expiry_date" type="date" class="{{ $inputClass }}">
+                        <x-ui.date-picker id="expiry_date" model="expiry_date" />
                         <x-input-error :messages="$errors->get('expiry_date')" class="mt-2" />
                     </div>
                     <div>
                         <label for="received_at" class="{{ $labelClass }}">Received date</label>
-                        <input id="received_at" wire:model="received_at" type="date" class="{{ $inputClass }}">
+                        <x-ui.date-picker id="received_at" model="received_at" />
                         <x-input-error :messages="$errors->get('received_at')" class="mt-2" />
                     </div>
                     <div>

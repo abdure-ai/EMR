@@ -58,12 +58,12 @@
 
                 <div>
                     <label class="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">From</label>
-                    <input type="date" wire:model.live="from" class="{{ $selectClass }}">
+                    <x-ui.date-picker model="from" live class="{{ $selectClass }}" />
                 </div>
 
                 <div>
                     <label class="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">To</label>
-                    <input type="date" wire:model.live="to" class="{{ $selectClass }}">
+                    <x-ui.date-picker model="to" live class="{{ $selectClass }}" />
                 </div>
 
                 @if ($search || $entityType || $action || $from || $to)

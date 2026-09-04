@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Spatie\Permission\Models\Role;
 
 class UserIndex extends Component
 {
@@ -17,14 +16,6 @@ class UserIndex extends Component
     public function mount(): void
     {
         Gate::authorize('viewAny', User::class);
-    }
-
-    public function assignRole(int $userId, string $role): void
-    {
-        Gate::authorize('update', User::class);
-
-        $user = User::findOrFail($userId);
-        $user->syncRoles([$role]);
     }
 
     public function toggleActive(int $userId): void
@@ -51,7 +42,6 @@ class UserIndex extends Component
                 ->with('roles')
                 ->orderBy('name')
                 ->paginate(15),
-            'roles' => Role::pluck('name'),
         ])->extends('layouts.app')->title('Users & Roles');
     }
 }

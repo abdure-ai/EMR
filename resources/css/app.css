@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap') layer(base);
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap') layer(base);
 @import 'prismjs/themes/prism.min.css';
 @import 'tailwindcss';
 
@@ -14,6 +14,7 @@
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --font-fraunces: Fraunces, ui-serif, Georgia, serif;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -59,6 +60,32 @@
   --color-brand-800: #252dae;
   --color-brand-900: #262e89;
   --color-brand-950: #161950;
+
+  /* Public marketing site palette (Nesiha Herbal Clinic) - deliberately
+     separate from --color-brand-*, which is the internal dashboard's
+     identity. Warm/herbal instead of the dashboard's cool blue. */
+  --color-clinic-cream-50: #fdfbf6;
+  --color-clinic-cream-100: #faf5ea;
+  --color-clinic-cream-200: #f3ead6;
+
+  --color-clinic-sage-50: #eef3ec;
+  --color-clinic-sage-100: #dbe7d6;
+  --color-clinic-sage-200: #b7d0ae;
+  --color-clinic-sage-300: #93b986;
+  --color-clinic-sage-400: #6d9e5d;
+  --color-clinic-sage-500: #4f7a44;
+  --color-clinic-sage-600: #3f6337;
+  --color-clinic-sage-700: #335029;
+  --color-clinic-sage-800: #253a1e;
+  --color-clinic-sage-900: #1a2916;
+
+  --color-clinic-amber-400: #dc9c56;
+  --color-clinic-amber-500: #c97a3b;
+  --color-clinic-amber-600: #a8602a;
+
+  --color-clinic-ink: #22291f;
+  --color-clinic-ink-soft: #566152;
+  --color-clinic-ink-faint: #8b9484;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;

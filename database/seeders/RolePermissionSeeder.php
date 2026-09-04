@@ -39,6 +39,7 @@ class RolePermissionSeeder extends Seeder
         'users.manage',
         'reports.view',
         'audit.view',
+        'cms.manage',
     ];
 
     /**
@@ -56,7 +57,7 @@ class RolePermissionSeeder extends Seeder
             'prescriptions.view', 'prescriptions.dispense',
             'inventory.view', 'inventory.manage',
             'followups.view', 'followups.manage', 'settings.manage',
-            'reports.view', 'audit.view',
+            'reports.view', 'audit.view', 'cms.manage',
         ],
         'Reception' => [
             'patients.view', 'patients.create', 'patients.update',

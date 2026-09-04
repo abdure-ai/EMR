@@ -34,6 +34,28 @@
                 <x-input-error :messages="$errors->get('price')" class="mt-2" />
             </div>
 
+            <hr class="border-gray-100 dark:border-gray-800">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Public website (optional)</p>
+
+            <div>
+                <label for="description" class="{{ $labelClass }}">Description</label>
+                <textarea id="description" wire:model="description" rows="3" placeholder="Shown on the public Services page" class="{{ $inputClass }}"></textarea>
+                <x-input-error :messages="$errors->get('description')" class="mt-2" />
+            </div>
+            <div>
+                <label class="{{ $labelClass }}">Photo</label>
+                @if ($image)
+                    <img src="{{ $image->temporaryUrl() }}" class="mb-2 h-32 w-full max-w-xs rounded-lg object-cover" alt="">
+                @endif
+                <input type="file" wire:model="image" accept="image/*" class="block text-sm text-gray-600 dark:text-gray-400">
+                <div wire:loading wire:target="image" class="text-xs text-gray-400">Uploading…</div>
+                <x-input-error :messages="$errors->get('image')" class="mt-2" />
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="show_on_website" wire:model="show_on_website" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500">
+                <label for="show_on_website" class="text-sm text-gray-700 dark:text-gray-300">Show on public Services page</label>
+            </div>
+
             <div class="flex justify-end gap-3">
                 <a href="{{ route('services.index') }}" class="self-center text-sm text-gray-600 dark:text-gray-300">Cancel</a>
                 <x-ui.button type="submit">{{ __('Create Service') }}</x-ui.button>

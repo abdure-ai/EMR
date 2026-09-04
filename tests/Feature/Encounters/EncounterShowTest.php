@@ -225,6 +225,19 @@ class EncounterShowTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_pharmacist_cannot_view_an_encounter(): void
+    {
+        $pharmacist = User::factory()->create();
+        $pharmacist->assignRole('Pharmacist');
+        $patient = $this->makePatient();
+        $practitioner = $this->makePractitioner();
+        $queueEntry = QueueEntry::create(['patient_id' => $patient->id, 'practitioner_id' => $practitioner->id]);
+
+        $this->actingAs($pharmacist)
+            ->get(route('encounters.show', [$patient, $queueEntry->encounter]))
+            ->assertForbidden();
+    }
+
     public function test_clinic_manager_can_edit_any_practitioners_draft_encounter(): void
     {
         $manager = User::factory()->create();

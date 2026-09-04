@@ -14,7 +14,7 @@
             <button
                 class="hidden xl:flex items-center justify-center w-10 h-10 text-gray-500 border border-gray-200 rounded-lg dark:border-gray-800 dark:text-gray-400 lg:h-11 lg:w-11"
                 :class="{ 'bg-gray-100 dark:bg-white/[0.03]': !$store.sidebar.isExpanded }"
-                @click="$store.sidebar.toggleExpanded()" aria-label="Toggle Sidebar">
+                @click="$store.sidebar.toggleExpanded()" aria-label="{{ __('Toggle Sidebar') }}">
                 <svg x-show="!$store.sidebar.isMobileOpen" width="16" height="12" viewBox="0 0 16 12" fill="none"
                     xmlns="http://www.w3.org/2000/svg">
                     <path fill-rule="evenodd" clip-rule="evenodd"
@@ -33,7 +33,7 @@
             <button
                 class="flex xl:hidden items-center justify-center w-10 h-10 text-gray-500 rounded-lg dark:text-gray-400 lg:h-11 lg:w-11"
                 :class="{ 'bg-gray-100 dark:bg-white/[0.03]': $store.sidebar.isMobileOpen }"
-                @click="$store.sidebar.toggleMobileOpen()" aria-label="Toggle Mobile Menu">
+                @click="$store.sidebar.toggleMobileOpen()" aria-label="{{ __('Toggle Mobile Menu') }}">
                 <svg x-show="!$store.sidebar.isMobileOpen" width="16" height="12" viewBox="0 0 16 12" fill="none"
                     xmlns="http://www.w3.org/2000/svg">
                     <path fill-rule="evenodd" clip-rule="evenodd"
@@ -67,8 +67,8 @@
 
             <!-- Search Bar (desktop only) -->
             <div class="hidden xl:block">
-                <button type="button" @click="$store.palette.toggle()" class="relative block" aria-label="Open command palette">
-                    <span class="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
+                <button type="button" @click="$store.palette.toggle()" class="relative block" aria-label="{{ __('Open command palette') }}">
+                    <span class="absolute -translate-y-1/2 pointer-events-none start-4 top-1/2">
                         <!-- Search Icon -->
                         <svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20"
                             viewBox="0 0 20 20" fill="none">
@@ -79,7 +79,7 @@
                     </span>
                     <span
                         class="dark:bg-dark-900 flex h-11 w-[280px] items-center rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-left text-sm text-gray-400 shadow-theme-xs dark:border-gray-800 dark:bg-white/3 dark:text-white/30 xl:w-[430px]">
-                        Search or type command...
+                        {{ __('Search or type command...') }}
                     </span>
                     <span
                         class="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
@@ -111,6 +111,23 @@
                             fill="currentColor" />
                     </svg>
                 </button>
+
+                <!-- Language Switcher -->
+                <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                    <button @click="open = !open" type="button" aria-label="{{ __('Change language') }}"
+                            class="relative flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full h-11 w-11 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z" stroke="currentColor" stroke-width="1.4"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition
+                         class="absolute end-0 z-40 mt-3 w-44 overflow-hidden rounded-2xl border border-gray-200 bg-white py-1.5 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark">
+                        @foreach (\App\Http\Middleware\SetLocale::SUPPORTED as $code => $name)
+                            <a href="{{ route('language.switch', $code) }}"
+                               class="flex items-center justify-between px-4 py-2.5 text-sm {{ app()->getLocale() === $code ? 'font-semibold text-brand-500' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5' }}">
+                                {{ $name }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
 
                 <!-- Notification Dropdown -->
                 <livewire:header.notification-dropdown />

@@ -30,7 +30,7 @@
 
                 <div>
                     <label for="scheduled_date" class="{{ $labelClass }}">Date</label>
-                    <input id="scheduled_date" wire:model="scheduled_date" type="date" class="{{ $inputClass }}">
+                    <x-ui.date-picker id="scheduled_date" model="scheduled_date" />
                     <x-input-error :messages="$errors->get('scheduled_date')" class="mt-2" />
                 </div>
                 <div>

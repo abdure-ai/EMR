@@ -22,11 +22,11 @@
                 <div class="ml-auto flex flex-wrap items-end gap-3">
                     <div>
                         <label class="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">From</label>
-                        <input type="date" wire:model.live="from" class="{{ $selectClass }}">
+                        <x-ui.date-picker model="from" live class="{{ $selectClass }}" />
                     </div>
                     <div>
                         <label class="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">To</label>
-                        <input type="date" wire:model.live="to" class="{{ $selectClass }}">
+                        <x-ui.date-picker model="to" live class="{{ $selectClass }}" />
                     </div>
                     <button wire:click="exportCsv" type="button"
                             class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]">
